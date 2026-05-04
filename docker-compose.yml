@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: secretpassword
       POSTGRES_DB: nexaaudit
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./internal/db/init.sql:/docker-entrypoint-initdb.d/init.sql
