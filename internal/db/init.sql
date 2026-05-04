@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS documents (
-    id UUID PRIMARY KEY DEFAULT gen_random_default_uuid(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     file_name VARCHAR(255) NOT NULL,
     status VARCHAR(50) DEFAULT 'pending', -- pending, processing, audited, flagged

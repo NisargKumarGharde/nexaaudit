@@ -12,7 +12,7 @@ import (
 func NewConnection() *pgxpool.Pool {
 	// Note: In production, we will change this to .env file
 	// For now, it matches your docker-compose.yml
-	dsn := "postgres://admin:secretpassword@localhost:5433/nexaaudit??sslmode=disable"
+	dsn := "postgres://admin:secretpassword@localhost:5434/nexaaudit?sslmode=disable"
 
 	pool, err := pgxpool.New(context.Background(), dsn)
 	if err != nil {
