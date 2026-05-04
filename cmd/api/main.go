@@ -27,7 +27,7 @@ func main() {
 	})
 
 	// 4. New Upload Route
-	http.HandleFunc("app/v1/upload", appHandler.UploadDocument)
+	http.HandleFunc("/api/v1/upload", appHandler.UploadDocument)
 
 	// 5. Start Server
 	fmt.Println("Server starting on port 8080...")
