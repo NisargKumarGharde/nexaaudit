@@ -21,7 +21,7 @@ type AuditResult struct {
 }
 
 func AnalyzeInvoice(ctx context.Context, fileBytes []byte, mimeType string) (*AuditResult, error) {
-	apiKey := "AIzaSyDhiPMndTyK6idkiwYuYMK5EtY93UzwDjY"
+	apiKey := "AIzaSyDJYmKgCn_ibf0lrkKltUTY19kLq1g-TN0"
 	if apiKey == "" {
 		return nil, fmt.Errorf("GEMINI_API_KEY environment variable is not set")
 	}
