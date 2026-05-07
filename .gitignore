@@ -1,0 +1,18 @@
+# Security - NEVER upload environment variables
+.env
+
+# Go build outputs
+/bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test output
+*.test
+*.out
+
+# OS specific hidden files
+.DS_Store
+Thumbs.db

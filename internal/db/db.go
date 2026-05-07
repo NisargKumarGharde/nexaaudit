@@ -4,22 +4,28 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os" // NEW: We need the os package to read environment variables
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// NewConnection creates and returns a database connection pool
 func NewConnection() *pgxpool.Pool {
-	// Note: In production, we will change this to .env file
-	// For now, it matches your docker-compose.yml
-	dsn := "postgres://admin:secretpassword@localhost:5434/nexaaudit?sslmode=disable"
+	// 1. Grab the connection string from the .env file
+	dsn := os.Getenv("DATABASE_URL")
 
+	// 2. Add a safety fallback just in case the .env file is missing
+	if dsn == "" {
+		fmt.Println("⚠️ DATABASE_URL not found in environment, falling back to default...")
+		dsn = "postgres://nexa_admin:supersecretpassword123@localhost:5434/nexaaudit?sslmode=disable"
+	}
+
+	// 3. Connect to the database
 	pool, err := pgxpool.New(context.Background(), dsn)
 	if err != nil {
 		log.Fatalf("Unable to connect to database: %v\n", err)
 	}
 
-	// Ping the database to ensure the connection is actually alive
+	// 4. Ping to verify the connection is actually alive
 	err = pool.Ping(context.Background())
 	if err != nil {
 		log.Fatalf("Database is not responding: %v\n", err)

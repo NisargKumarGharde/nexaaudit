@@ -8,9 +8,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/NisargKumarGharde/nexaaudit/internal/ai"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/NisargKumarGharde/nexaaudit/internal/ai"
+	"github.com/NisargKumarGharde/nexaaudit/internal/db"
 )
 
 type Handler struct {
@@ -18,7 +20,7 @@ type Handler struct {
 }
 
 func (h *Handler) UploadDocument(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseMultipartForm(10 << 20) // 10MB limit
+	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
 		http.Error(w, "Unable to parse form", http.StatusBadRequest)
 		return
@@ -31,17 +33,15 @@ func (h *Handler) UploadDocument(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	// Read the file bytes into memory so we can send them to Gemini
 	fileBytes, err := io.ReadAll(file)
 	if err != nil {
 		http.Error(w, "Error reading file", http.StatusInternalServerError)
 		return
 	}
 
-	// Detect the MIME type (e.g., application/pdf, image/jpeg)
 	mimeType := http.DetectContentType(fileBytes)
 
-	// -- Handle the Mock User --
+	// -- Handle Mock User --
 	var mockUserID uuid.UUID
 	err = h.DB.QueryRow(context.Background(), "SELECT id FROM users LIMIT 1").Scan(&mockUserID)
 	if err != nil {
@@ -67,15 +67,39 @@ func (h *Handler) UploadDocument(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 2. Call Gemini AI!
-	fmt.Println("🧠 Sending document to Gemini 1.5 Pro...")
+	// 2. Call Gemini AI for extraction
+	fmt.Println("🧠 Sending document to Gemini AI...")
 	auditResult, aiErr := ai.AnalyzeInvoice(context.Background(), fileBytes, mimeType)
 
-	// 3. Evaluate results and update the database
+	// 3. Vector Memory: Check for Duplicates
+	var isDuplicate bool
+	var originalDocID string
+	var vector []float32
+
+	if aiErr == nil {
+		fmt.Println("🔍 Generating semantic fingerprint for memory...")
+		// We embed a strict string of the extracted data
+		textToEmbed := fmt.Sprintf("Vendor: %s, Amount: %.2f", auditResult.VendorName, auditResult.TotalAmount)
+
+		vector, aiErr = ai.GenerateEmbedding(context.Background(), textToEmbed)
+		if aiErr == nil {
+			isDuplicate, originalDocID, aiErr = db.CheckDuplicate(context.Background(), vector)
+			if aiErr != nil {
+				fmt.Printf("⚠️ Pinecone check failed: %v\n", aiErr)
+			}
+		}
+	}
+
+	// 4. Evaluate results and update the database
 	finalStatus := "audited"
 	if aiErr != nil {
 		fmt.Printf("❌ AI Error: %v\n", aiErr)
 		finalStatus = "failed"
+	} else if isDuplicate {
+		fmt.Printf("🚨 DUPLICATE DETECTED! Matches Doc ID: %s\n", originalDocID)
+		finalStatus = "flagged" // Mark as flagged in DB
+		auditResult.IsFlagged = true
+		auditResult.RiskReason = "Duplicate submission detected. Potential fraud attempt."
 	} else if auditResult.IsFlagged {
 		finalStatus = "flagged"
 	}
@@ -88,12 +112,21 @@ func (h *Handler) UploadDocument(w http.ResponseWriter, r *http.Request) {
 
 		_, err = h.DB.Exec(context.Background(), updateQuery, finalStatus, auditResult.TotalAmount, auditResult.VendorName, docID)
 		if err != nil {
-			http.Error(w, fmt.Sprintf("Failed to update database with AI results: %v", err), http.StatusInternalServerError)
+			http.Error(w, fmt.Sprintf("Failed to update db: %v", err), http.StatusInternalServerError)
 			return
+		}
+
+		// 5. Save the new fingerprint to Pinecone if it wasn't a duplicate
+		if !isDuplicate && vector != nil {
+			fmt.Println("💾 Saving new fingerprint to long-term memory...")
+			err = db.SaveVector(context.Background(), docID.String(), vector)
+			if err != nil {
+				fmt.Printf("⚠️ Failed to save to Pinecone: %v\n", err)
+			}
 		}
 	}
 
-	// 4. Return the enriched JSON response
+	// 6. Return response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]interface{}{
@@ -101,6 +134,6 @@ func (h *Handler) UploadDocument(w http.ResponseWriter, r *http.Request) {
 		"document_id": docID,
 		"file_name":   header.Filename,
 		"status":      finalStatus,
-		"ai_results":  auditResult, // This will inject the structured JSON from Gemini directly into the API response!
+		"ai_results":  auditResult,
 	})
 }

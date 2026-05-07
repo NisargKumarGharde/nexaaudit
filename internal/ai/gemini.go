@@ -1,9 +1,12 @@
 package ai
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"os"
 	"strings"
 
 	"github.com/google/generative-ai-go/genai"
@@ -18,7 +21,7 @@ type AuditResult struct {
 }
 
 func AnalyzeInvoice(ctx context.Context, fileBytes []byte, mimeType string) (*AuditResult, error) {
-	apiKey := "AIzaSyDJYmKgCn_ibf0lrkKltUTY19kLq1g-TN0"
+	apiKey := "AIzaSyDhiPMndTyK6idkiwYuYMK5EtY93UzwDjY"
 	if apiKey == "" {
 		return nil, fmt.Errorf("GEMINI_API_KEY environment variable is not set")
 	}
@@ -75,4 +78,64 @@ func AnalyzeInvoice(ctx context.Context, fileBytes []byte, mimeType string) (*Au
 	}
 
 	return &result, nil
+}
+
+// GenerateEmbedding converts a text string into a 768-dimension vector using direct HTTP
+func GenerateEmbedding(ctx context.Context, text string) ([]float32, error) {
+	apiKey := os.Getenv("GEMINI_API_KEY")
+	if apiKey == "" {
+		return nil, fmt.Errorf("GEMINI_API_KEY environment variable is not set")
+	}
+
+	// 1. Point directly to Google's REST API
+	url := "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-2:embedContent?key=" + apiKey
+
+	// 2. Build the exact JSON payload Google expects
+	payload := map[string]interface{}{
+		"model": "models/gemini-embedding-2",
+		"content": map[string]interface{}{
+			"parts": []map[string]interface{}{
+				{"text": text},
+			},
+		},
+		"outputDimensionality": 768,
+	}
+	body, _ := json.Marshal(payload)
+
+	// 3. Make the request
+	req, _ := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("network error: %v", err)
+	}
+	defer res.Body.Close()
+
+	// 4. Catch the exact response structure
+	var result struct {
+		Embedding struct {
+			Values []float32 `json:"values"`
+		} `json:"embedding"`
+		Error *struct {
+			Message string `json:"message"`
+		} `json:"error"`
+	}
+
+	if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode json: %v", err)
+	}
+
+	// If Google returns an error, catch it explicitly
+	if result.Error != nil {
+		return nil, fmt.Errorf("gemini api rejected request: %s", result.Error.Message)
+	}
+
+	// If it's still empty, we print the exact text we tried to embed for debugging
+	if len(result.Embedding.Values) == 0 {
+		return nil, fmt.Errorf("gemini returned empty array for text: '%s'", text)
+	}
+
+	return result.Embedding.Values, nil
 }
