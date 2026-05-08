@@ -36,6 +36,8 @@ func main() {
 	})
 	mux.HandleFunc("/api/v1/upload", appHandler.UploadDocument)
 
+	mux.HandleFunc("/api/v1/dashboard", appHandler.GetDashboard)
+
 	// 5. Configure CORS to allow the frontend to talk to the backend
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"}, // Allows localhost:8081, 3000, 5173, etc.
