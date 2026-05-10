@@ -66,7 +66,7 @@ NexaAudit is designed as a highly concurrent, multi-cloud application.
 
 ### 1. Clone the repository
 ```bash
-git clone [https://github.com/NisargKumarGharde/nexaaudit.git](https://github.com/NisargKumarGharde/nexaaudit.git)
+git clone https://github.com/NisargKumarGharde/nexaaudit.git
 cd nexaaudit
 ```
 
