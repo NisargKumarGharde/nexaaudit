@@ -57,6 +57,14 @@ NexaAudit is designed as a highly concurrent, multi-cloud application.
 
 ---
 
+## 📖 Engineering Journal
+
+Building a multi-cloud, AI-native application from scratch involves hitting real-world infrastructure walls. I documented my debugging process, architectural pivots, and lessons learned regarding database connection pooling, silent failures, and cloud geo-blocking.
+
+👉 **[Read the full Engineering Journal & Lessons Learned](./PROJECT_JOURNAL.md)**
+
+---
+
 ## 💻 Local Development Setup
 
 ### Prerequisites
@@ -100,3 +108,4 @@ LinkedIn: [Nisarg Gharde](https://www.linkedin.com/in/nisargkumargharde/)
 Email: [nisarg.gharde@gmail.com](mailto:nisarg.gharde@gmail.com)
 
 Currently open to Internships and Entry-Level roles and actively seeking opportunities.
+
