@@ -25,6 +25,7 @@ type DocInfo struct {
 
 func (h *Handler) GetDashboard(w http.ResponseWriter, r *http.Request) {
 	var stats DashboardStats
+	stats.RecentFiles = []DocInfo{}
 	ctx := context.Background()
 
 	// 1. Calculate Totals directly in PostgreSQL
