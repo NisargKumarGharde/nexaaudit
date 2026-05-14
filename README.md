@@ -9,10 +9,10 @@
   <img src="https://lovable.dev/favicon.svg" height="48" alt="Lovable AI" title="Lovable AI" /> &nbsp;&nbsp;
 </p>
 
+**An AI-Powered Financial Fraud Detection & Audit Engine** built to automate the extraction of unstructured invoice data and prevent duplicate transaction fraud using semantic vector embeddings.
+
 <video src="https://github.com/user-attachments/assets/32a19e9f-9dce-4427-bc82-ed65fbe1c51a" controls="controls" muted="muted" style="max-width: 100%;">
 </video>
-
-**An AI-Powered Financial Fraud Detection & Audit Engine** built to automate the extraction of unstructured invoice data and prevent duplicate transaction fraud using semantic vector embeddings.
 
 ---
 
