@@ -35,6 +35,8 @@ NexaAudit is designed as a highly concurrent, multi-cloud application.
 * **UI Generation:** Rapidly prototyped and generated using **Lovable** to accelerate the frontend workflow, allowing maximum engineering bandwidth to be dedicated to the backend RAG architecture.
 * **Features:** Drag-and-drop document upload, real-time polling dashboard, responsive UI.
 
+👉 **[View the Frontend Repository](https://github.com/NisargKumarGharde/nexaaudit-insights)**
+
 ### Data Layer
 * **Relational State (Supabase / PostgreSQL):** Handles user generation, document metadata, and final extraction status.
 * **Vector Memory (Pinecone):** Serverless vector database storing document embeddings for sub-second similarity searches.
